@@ -162,6 +162,7 @@
                     <tr>
                         <th class="px-2 py-1 text-left">Barcode</th>
                         <th class="px-2 py-1 text-left">Nomi</th>
+                        <th class="px-2 py-1 text-left">Kod</th>
                         <th class="px-2 py-1 text-right">Narxi</th>
                         <th class="px-2 py-1"></th>
                     </tr>
@@ -172,6 +173,7 @@
                             class="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-200">
                             <td class="px-2 py-1">{{ $p->barcode }}</td>
                             <td class="px-2 py-1">{{ $p->name }}</td>
+                            <td class="px-2 py-1">{{ $p->code }}</td>
                             <td class="px-2 py-1 text-right">{{ number_format($p->price, 2, '.', ' ') }}</td>
                             <td class="px-2 py-1">
                                 <x-filament::button wire:click="add({{ $p->id }})" size="sm">

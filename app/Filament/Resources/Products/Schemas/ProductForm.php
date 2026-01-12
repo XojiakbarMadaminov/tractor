@@ -4,14 +4,12 @@ namespace App\Filament\Resources\Products\Schemas;
 
 use App\Models\Stock;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
 
 class ProductForm
 {
@@ -29,6 +27,11 @@ class ProductForm
                             ->required()
                             ->columnSpanFull(),
 
+                        TextInput::make('code')
+                            ->label('Kod')
+                            ->unique('products', 'code', ignoreRecord: true)
+                            ->nullable(),
+
                         TextInput::make('barcode')
                             ->label('Bar kod')
                             ->unique('products', 'barcode', ignoreRecord: true)
@@ -45,7 +48,7 @@ class ProductForm
                             ),
                         Select::make('category_id')
                             ->label('Kategoriyasi')
-                            ->relationship('category', 'name',  fn($query) => $query->scopes('active')),
+                            ->relationship('category', 'name', fn ($query) => $query->scopes('active')),
                     ]),
 
                 Section::make(' Narxlar')
@@ -66,7 +69,7 @@ class ProductForm
                                         $fail('Sotish narxi kelgan narxidan katta bo‘lishi kerak.');
                                     }
                                 };
-                            })
+                            }),
                     ]),
 
                 Section::make('Tovar miqdori')
@@ -77,31 +80,30 @@ class ProductForm
                         $stocks = Stock::query()
                             ->scopes('active')
                             ->where('is_active', true)
-                            ->whereHas('stores', fn($q) => $q->where('stores.id', $user->current_store_id))
+                            ->whereHas('stores', fn ($q) => $q->where('stores.id', $user->current_store_id))
                             ->get();
 
                         return [
                             Grid::make($stocks->count())
-                            ->schema(
-                                $stocks->map(fn($stock) =>
-                                TextInput::make("stocks.{$stock->id}.quantity")
-                                    ->label($stock->name)
-                                    ->numeric()
-                                    ->afterStateHydrated(function (TextInput $component) use ($record, $stock) {
-                                        if ($record) {
-                                            $ps = $record->productStocks()
-                                                ->where('stock_id', $stock->id)
-                                                ->first();
-                                            $component->state($ps?->quantity ?? 0);
-                                        }
-                                    })
-                                )->toArray()
-                            ),
+                                ->schema(
+                                    $stocks->map(
+                                        fn ($stock) => TextInput::make("stocks.{$stock->id}.quantity")
+                                            ->label($stock->name)
+                                            ->numeric()
+                                            ->afterStateHydrated(function (TextInput $component) use ($record, $stock) {
+                                                if ($record) {
+                                                    $ps = $record->productStocks()
+                                                        ->where('stock_id', $stock->id)
+                                                        ->first();
+                                                    $component->state($ps?->quantity ?? 0);
+                                                }
+                                            })
+                                    )->toArray()
+                                ),
                         ];
-                    })
+                    }),
             ]);
     }
-
 
     private static function generateEAN13Barcode(): string
     {

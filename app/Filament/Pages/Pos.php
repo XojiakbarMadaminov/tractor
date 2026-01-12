@@ -2,47 +2,46 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\Product;
-use App\Models\ProductStock;
 use App\Models\Sale;
-use App\Models\Stock;
-use App\Services\CartService;
-use BezhanSalleh\FilamentShield\Traits\HasPageShield;
-use Filament\Notifications\Notification;
+use App\Models\Product;
 use Filament\Pages\Page;
-use Filament\Panel\Concerns\HasNotifications;
-use Illuminate\Support\Collection as EloquentCollection;
 use Livewire\Attributes\On;
+use App\Models\ProductStock;
+use App\Services\CartService;
+use Filament\Notifications\Notification;
+use Filament\Panel\Concerns\HasNotifications;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
+use Illuminate\Support\Collection as EloquentCollection;
 
 class Pos extends Page
 {
     use HasNotifications, HasPageShield;
 
-    protected static ?string $title = 'Sotuv';
-    protected string $view = 'filament.pages.pos';
+    protected static ?string $title                          = 'Sotuv';
+    protected string $view                                   = 'filament.pages.pos';
     protected static string|null|\BackedEnum $navigationIcon = 'heroicon-o-shopping-cart';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort                    = 1;
 
     public function getHeading(): string
     {
         return '';
     }
 
-    public string $search = '';
-    public int $activeCartId = 1; // Joriy faol cart ID
-    public bool $showReceipt = false; // Chek ko'rsatish uchun
+    public string $search     = '';
+    public int $activeCartId  = 1; // Joriy faol cart ID
+    public bool $showReceipt  = false; // Chek ko'rsatish uchun
     public array $receiptData = []; // Chek ma'lumotlari
 
-    /** @var EloquentCollection<int, \App\Models\Product> */
+    /** @var EloquentCollection<int, Product> */
     public EloquentCollection $products;
 
-    public array $cart = [];
-    public array $totals = ['qty' => 0, 'amount' => 0];
+    public array $cart        = [];
+    public array $totals      = ['qty' => 0, 'amount' => 0];
     public array $activeCarts = []; // Barcha faol cartlar ro'yxati
 
     public function mount(): void
     {
-        $this->products = new EloquentCollection();
+        $this->products = new EloquentCollection;
         $this->refreshActiveCarts();
 
         // Oxirgi faol cart ID ni session dan olish
@@ -73,7 +72,7 @@ class Pos extends Page
 
         $this->refreshCart();
         $this->reset('search');
-        $this->products = new EloquentCollection();
+        $this->products = new EloquentCollection;
     }
 
     public function createNewCart(): void
@@ -111,6 +110,7 @@ class Pos extends Page
                 ->title('Kamida bitta savat ochiq bo\'lishi kerak')
                 ->warning()
                 ->send();
+
             return;
         }
 
@@ -118,7 +118,7 @@ class Pos extends Page
 
         // Agar yopilayotgan cart joriy faol cart bo'lsa, boshqasini tanlash
         if ($this->activeCartId === $cartId) {
-            $remainingCarts = array_filter($allActiveCarts, fn($id) => $id !== $cartId);
+            $remainingCarts     = array_filter($allActiveCarts, fn ($id) => $id !== $cartId);
             $this->activeCartId = reset($remainingCarts) ?: 1;
             session()->put('pos_active_cart_id', $this->activeCartId);
         }
@@ -136,13 +136,16 @@ class Pos extends Page
     public function updatedSearch(): void
     {
         if (empty(trim($this->search))) {
-            $this->products = new EloquentCollection();
+            $this->products = new EloquentCollection;
+
             return;
         }
 
         $this->products = Product::query()
-            ->where(fn($q) => $q->where('barcode', 'ILIKE', "%{$this->search}%")
-                ->orWhere('name', 'ILIKE', "%{$this->search}%")
+            ->where(
+                fn ($q) => $q->where('barcode', 'ILIKE', "%{$this->search}%")
+                    ->orWhere('code', 'ILIKE', "%{$this->search}%")
+                    ->orWhere('name', 'ILIKE', "%{$this->search}%")
             )
             ->orderBy('name')
             ->limit(15)
@@ -162,13 +165,14 @@ class Pos extends Page
         $cartService = app(CartService::class);
 
         $cart = $cartService->all($this->activeCartId);
-        $row = $cart[$id] ?? null;
+        $row  = $cart[$id] ?? null;
 
         if (!$row || empty($row['stock_id'])) {
             Notification::make()
                 ->title('Avval skladni tanlang')
                 ->danger()
                 ->send();
+
             return false;
         }
 
@@ -182,6 +186,7 @@ class Pos extends Page
                 ->body("Skladda faqat {$available} dona mavjud.")
                 ->danger()
                 ->send();
+
             return false;
         }
 
@@ -190,7 +195,6 @@ class Pos extends Page
         $this->refreshCart();
         $this->refreshActiveCarts();
     }
-
 
     public function remove(int $id): void
     {
@@ -203,13 +207,14 @@ class Pos extends Page
     public function checkout(): void
     {
         $cartService = app(CartService::class);
-        $totals = $cartService->totals($this->activeCartId);
+        $totals      = $cartService->totals($this->activeCartId);
 
         if (!$totals['qty']) {
             Notification::make()
                 ->title('Savat bo\'sh')
                 ->warning()
                 ->send();
+
             return;
         }
 
@@ -221,6 +226,7 @@ class Pos extends Page
                     ->title("{$row['name']} uchun sklad tanlanmagan")
                     ->danger()
                     ->send();
+
                 return;
             }
 
@@ -234,6 +240,7 @@ class Pos extends Page
                     ->body("Skladda faqat {$available} dona mavjud.")
                     ->danger()
                     ->send();
+
                 return;
             }
         }
@@ -243,15 +250,15 @@ class Pos extends Page
         \DB::transaction(function () use ($cartService, $totals) {
             $sale = Sale::create([
                 'store_id' => auth()->user()->current_store_id,
-                'total' => $totals['amount']
+                'total'    => $totals['amount'],
             ]);
 
             foreach ($cartService->all($this->activeCartId) as $row) {
                 $sale->items()->create([
                     'product_id' => $row['id'],
-                    'qty' => $row['qty'],
-                    'price' => $row['price'],
-                    'subtotal' => $row['qty'] * $row['price'],
+                    'qty'        => $row['qty'],
+                    'price'      => $row['price'],
+                    'subtotal'   => $row['qty'] * $row['price'],
                 ]);
 
                 ProductStock::where('product_id', $row['id'])
@@ -262,7 +269,7 @@ class Pos extends Page
 
         $cartService->clear($this->activeCartId);
         $this->reset('search');
-        $this->products = new EloquentCollection();
+        $this->products = new EloquentCollection;
         $this->refreshCart();
         $this->refreshActiveCarts();
 
@@ -276,10 +283,10 @@ class Pos extends Page
     public function prepareReceipt(int $cartId, array $items, array $totals): void
     {
         $this->receiptData = [
-            'cart_id' => $cartId,
-            'items' => $items,
-            'totals' => $totals,
-            'date' => now()->format('d.m.Y H:i:s'),
+            'cart_id'        => $cartId,
+            'items'          => $items,
+            'totals'         => $totals,
+            'date'           => now()->format('d.m.Y H:i:s'),
             'receipt_number' => 'R' . str_pad($cartId, 4, '0', STR_PAD_LEFT) . time(),
         ];
 
@@ -301,14 +308,14 @@ class Pos extends Page
     #[On('refresh-cart')]
     public function refreshCart(): void
     {
-        $cartService = app(CartService::class);
-        $this->cart = $cartService->all($this->activeCartId);
+        $cartService  = app(CartService::class);
+        $this->cart   = $cartService->all($this->activeCartId);
         $this->totals = $cartService->totals($this->activeCartId);
     }
 
     public function refreshActiveCarts(): void
     {
-        $cartService = app(CartService::class);
+        $cartService       = app(CartService::class);
         $this->activeCarts = [];
 
         // Barcha mavjud cartlarni olish (bo'sh ham, to'la ham)
@@ -329,9 +336,13 @@ class Pos extends Page
     public function scanEnter(): void
     {
         $code = trim($this->search);
-        if (!$code) return;
+        if (!$code) {
+            return;
+        }
 
-        $product = Product::where('barcode', $code)->first();
+        $product = Product::where('barcode', $code)
+            ->orWhere('code', $code)
+            ->first();
         if ($product) {
             $this->add($product->id);
             $this->reset('search');
@@ -351,9 +362,11 @@ class Pos extends Page
         }
 
         $product = Product::where('barcode', $value)
+            ->orWhere('code', $value)
             ->orWhere(function ($q) use ($value) {
                 $q->where('name', 'ILIKE', "{$value}%")
-                    ->orWhere('name', 'ILIKE', "%{$value}");
+                    ->orWhere('name', 'ILIKE', "%{$value}")
+                    ->orWhere('code', 'ILIKE', "%{$value}%");
             })
             ->first();
 
@@ -401,6 +414,4 @@ class Pos extends Page
         $this->refreshCart();
         $this->refreshActiveCarts();
     }
-
-
 }

@@ -2,25 +2,25 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
-use App\Models\Product;
 use App\Models\Stock;
+use App\Models\Product;
+use Filament\Tables\Table;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TrashedFilter;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Filament\Tables\Filters\Filter;
+use Filament\Actions\BulkActionGroup;
+use Filament\Forms\Components\Select;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\ForceDeleteBulkAction;
 
 class ProductsTable
 {
@@ -29,9 +29,9 @@ class ProductsTable
         $stocks = cache()->remember(
             'active_stocks_for_store_' . auth()->id(),
             60, // 1 soat
-            fn() => Stock::query()
+            fn () => Stock::query()
                 ->scopes('active')
-                ->whereHas('stores', fn($q) => $q->where('stores.id', auth()->user()->current_store_id))
+                ->whereHas('stores', fn ($q) => $q->where('stores.id', auth()->user()->current_store_id))
                 ->get()
         );
 
@@ -41,6 +41,10 @@ class ProductsTable
                 [
                     TextColumn::make('name')
                         ->label('Nomi')
+                        ->searchable(),
+
+                    TextColumn::make('code')
+                        ->label('Kod')
                         ->searchable(),
 
                     TextColumn::make('barcode')
@@ -63,22 +67,23 @@ class ProductsTable
                         ->sortable()
                         ->searchable(),
                 ],
-
-                $stocks->map(fn($stock) => TextColumn::make("stock_{$stock->id}")
-                    ->label($stock->name)
-                    ->alignCenter()
-                    ->getStateUsing(fn($record) => optional(
-                        $record->productStocks
-                            ->firstWhere('stock_id', $stock->id)
-                    )?->quantity ?? 0
-                    )
+                $stocks->map(
+                    fn ($stock) => TextColumn::make("stock_{$stock->id}")
+                        ->label($stock->name)
+                        ->alignCenter()
+                        ->getStateUsing(
+                            fn ($record) => optional(
+                                $record->productStocks
+                                    ->firstWhere('stock_id', $stock->id)
+                            )?->quantity ?? 0
+                        )
                 )->all()
             ))
             ->filters([
                 TrashedFilter::make(),
                 SelectFilter::make('category_id')
                     ->label('Kategoriyasi')
-                    ->relationship('category', 'name', fn($query) => $query->scopes('active')),
+                    ->relationship('category', 'name', fn ($query) => $query->scopes('active')),
                 Filter::make('stock_quantity')
                     ->label('Ombordagi miqdor')
                     ->schema([
@@ -105,7 +110,7 @@ class ProductsTable
 
                         return $query->whereHas('productStocks', function ($q) use ($data) {
                             $q->where('stock_id', $data['stock_id'])
-                                ->where('quantity', '<=', (int)$data['quantity']);
+                                ->where('quantity', '<=', (int) $data['quantity']);
                         });
                     }),
             ])
@@ -119,14 +124,14 @@ class ProductsTable
                             ->options([
                                 '30x20' => '3.0 cm x 2.0 cm',
                                 '57x30' => '5.7 cm x 3.0 cm',
-//                                '85x65' => '8.5 cm x 6.5 cm',
+                                //                                '85x65' => '8.5 cm x 6.5 cm',
                             ])
                             ->required(),
                     ])
                     ->action(function (array $data, Product $record) {
                         return redirect()->away(route('product.barcode.pdf', [
                             'product' => $record->id,
-                            'size' => $data['size'],
+                            'size'    => $data['size'],
                         ]));
                     }),
 
@@ -147,7 +152,7 @@ class ProductsTable
                                 ->options([
                                     '30x20' => '3.0 cm x 2.0 cm',
                                     '57x30' => '5.7 cm x 3.0 cm',
-//                                    '85x65' => '8.5 cm x 6.5 cm',
+                                    //                                    '85x65' => '8.5 cm x 6.5 cm',
                                 ])
                                 ->required(),
                         ])
@@ -160,10 +165,10 @@ class ProductsTable
                             ]));
                         })
                         ->requiresConfirmation()
-                        ->deselectRecordsAfterCompletion()
+                        ->deselectRecordsAfterCompletion(),
 
                 ]),
             ])
-            ->modifyQueryUsing(fn($query) => $query->with('productStocks'));
+            ->modifyQueryUsing(fn ($query) => $query->with('productStocks'));
     }
 }
