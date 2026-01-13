@@ -49,6 +49,9 @@ class ProductForm
                         Select::make('category_id')
                             ->label('Kategoriyasi')
                             ->relationship('category', 'name', fn ($query) => $query->scopes('active')),
+                        Select::make('is_from')
+                            ->label('Qayerdan')
+                            ->relationship('location', 'name', fn ($query) => $query->scopes('active')),
                     ]),
 
                 Section::make(' Narxlar')

@@ -66,6 +66,10 @@ class ProductsTable
                         ->label('Kategoriyasi')
                         ->sortable()
                         ->searchable(),
+                    TextColumn::make('location.name')
+                        ->label('Joylashuvi')
+                        ->sortable()
+                        ->searchable(),
                 ],
                 $stocks->map(
                     fn ($stock) => TextColumn::make("stock_{$stock->id}")
@@ -84,6 +88,9 @@ class ProductsTable
                 SelectFilter::make('category_id')
                     ->label('Kategoriyasi')
                     ->relationship('category', 'name', fn ($query) => $query->scopes('active')),
+                SelectFilter::make('is_from')
+                    ->label('Joylashuvi')
+                    ->relationship('location', 'name', fn ($query) => $query->scopes('active')),
                 Filter::make('stock_quantity')
                     ->label('Ombordagi miqdor')
                     ->schema([
@@ -169,6 +176,6 @@ class ProductsTable
 
                 ]),
             ])
-            ->modifyQueryUsing(fn ($query) => $query->with('productStocks'));
+            ->modifyQueryUsing(fn ($query) => $query->with(['productStocks', 'location']));
     }
 }
