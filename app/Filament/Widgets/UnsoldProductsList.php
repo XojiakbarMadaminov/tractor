@@ -3,14 +3,16 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Product;
-use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Widgets\TableWidget;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 
 class UnsoldProductsList extends TableWidget
 {
     use HasWidgetShield;
+
+    protected static bool $isLazy = true;
 
     protected int|string|array $columnSpan = 'full';
 
@@ -25,10 +27,8 @@ class UnsoldProductsList extends TableWidget
     protected function getTableColumns(): array
     {
         return [
-            TextColumn::make('id')->label('ID'),
-            TextColumn::make('name')->label('Mahsulot nomi')->searchable(),
-            TextColumn::make('category.name')->label('Kategoriyasi')->searchable(),
-            TextColumn::make('barcode')->label('Barkod')->toggleable()->searchable(),
+            TextColumn::make('index')->label('#')->rowIndex(),
+            TextColumn::make('name')->label('Mahsulot nomi'),
             TextColumn::make('yuan_price')->label('Yuan narxi'),
             TextColumn::make('initial_price')->label('Kelgan narxi'),
             TextColumn::make('price')->label('Narxi'),
