@@ -27,10 +27,11 @@ class Pos extends Page
         return '';
     }
 
-    public string $search     = '';
-    public int $activeCartId  = 1; // Joriy faol cart ID
-    public bool $showReceipt  = false; // Chek ko'rsatish uchun
-    public array $receiptData = []; // Chek ma'lumotlari
+    public string $barcodeSearch = '';
+    public string $codeSearch    = '';
+    public int $activeCartId     = 1; // Joriy faol cart ID
+    public bool $showReceipt     = false; // Chek ko'rsatish uchun
+    public array $receiptData    = []; // Chek ma'lumotlari
 
     /** @var EloquentCollection<int, Product> */
     public EloquentCollection $products;
@@ -71,8 +72,7 @@ class Pos extends Page
         session()->put('pos_active_cart_id', $cartId);
 
         $this->refreshCart();
-        $this->reset('search');
-        $this->products = new EloquentCollection;
+        $this->clearSearchInputs();
     }
 
     public function createNewCart(): void
@@ -133,23 +133,14 @@ class Pos extends Page
     }
 
     /* ---------- Qidiruv ---------- */
-    public function updatedSearch(): void
+    public function updatedBarcodeSearch(): void
     {
-        if (empty(trim($this->search))) {
-            $this->products = new EloquentCollection;
+        $this->searchProducts($this->barcodeSearch, ['barcode', 'name']);
+    }
 
-            return;
-        }
-
-        $this->products = Product::query()
-            ->where(
-                fn ($q) => $q->where('barcode', 'ILIKE', "%{$this->search}%")
-                    ->orWhere('code', 'ILIKE', "%{$this->search}%")
-                    ->orWhere('name', 'ILIKE', "%{$this->search}%")
-            )
-            ->orderBy('name')
-            ->limit(15)
-            ->get();
+    public function updatedCodeSearch(): void
+    {
+        $this->searchProducts($this->codeSearch, ['code', 'name']);
     }
 
     /* ---------- Savat operatsiyalari ---------- */
@@ -268,8 +259,7 @@ class Pos extends Page
         });
 
         $cartService->clear($this->activeCartId);
-        $this->reset('search');
-        $this->products = new EloquentCollection;
+        $this->clearSearchInputs();
         $this->refreshCart();
         $this->refreshActiveCarts();
 
@@ -335,17 +325,24 @@ class Pos extends Page
     /* ---------- Skaner metodlari ---------- */
     public function scanEnter(): void
     {
-        $code = trim($this->search);
-        if (!$code) {
+        $value     = trim($this->barcodeSearch);
+        $fieldName = 'barcodeSearch';
+
+        if ($value === '') {
+            $value     = trim($this->codeSearch);
+            $fieldName = 'codeSearch';
+        }
+
+        if ($value === '') {
             return;
         }
 
-        $product = Product::where('barcode', $code)
-            ->orWhere('code', $code)
+        $product = Product::where('barcode', $value)
+            ->orWhere('code', $value)
             ->first();
         if ($product) {
             $this->add($product->id);
-            $this->reset('search');
+            $this->clearSearchInputs($fieldName);
         } else {
             Notification::make()
                 ->title('Mahsulot topilmadi')
@@ -362,17 +359,47 @@ class Pos extends Page
         }
 
         $product = Product::where('barcode', $value)
-            ->orWhere('code', $value)
             ->orWhere(function ($q) use ($value) {
                 $q->where('name', 'ILIKE', "{$value}%")
-                    ->orWhere('name', 'ILIKE', "%{$value}")
-                    ->orWhere('code', 'ILIKE', "%{$value}%");
+                    ->orWhere('name', 'ILIKE', "%{$value}");
             })
             ->first();
 
         if ($product) {
             app(CartService::class)->add($product, 1, $this->activeCartId);
-            $this->reset('search');
+            $this->clearSearchInputs('barcodeSearch');
+            $this->refreshCart();
+            $this->refreshActiveCarts();
+
+            Notification::make()
+                ->title("Savat #{$this->activeCartId} ga qo'shildi")
+                ->success()
+                ->send();
+        } else {
+            Notification::make()
+                ->title('Mahsulot topilmadi')
+                ->danger()
+                ->send();
+        }
+    }
+
+    public function addByCode(string $value): void
+    {
+        $value = trim($value);
+        if (!$value) {
+            return;
+        }
+
+        $product = Product::where('code', $value)
+            ->orWhere(function ($q) use ($value) {
+                $q->where('name', 'ILIKE', "{$value}%")
+                    ->orWhere('name', 'ILIKE', "%{$value}");
+            })
+            ->first();
+
+        if ($product) {
+            app(CartService::class)->add($product, 1, $this->activeCartId);
+            $this->clearSearchInputs('codeSearch');
             $this->refreshCart();
             $this->refreshActiveCarts();
 
@@ -413,5 +440,41 @@ class Pos extends Page
 
         $this->refreshCart();
         $this->refreshActiveCarts();
+    }
+
+    protected function searchProducts(string $value, array $columns): void
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            $this->products = new EloquentCollection;
+
+            return;
+        }
+
+        $this->products = Product::query()
+            ->where(function ($query) use ($value, $columns) {
+                foreach ($columns as $index => $column) {
+                    if ($index === 0) {
+                        $query->where($column, 'ILIKE', "%{$value}%");
+                    } else {
+                        $query->orWhere($column, 'ILIKE', "%{$value}%");
+                    }
+                }
+            })
+            ->orderBy('name')
+            ->limit(15)
+            ->get();
+    }
+
+    protected function clearSearchInputs(?string $property = null): void
+    {
+        if ($property) {
+            $this->reset($property);
+        } else {
+            $this->reset('barcodeSearch', 'codeSearch');
+        }
+
+        $this->products = new EloquentCollection;
     }
 }

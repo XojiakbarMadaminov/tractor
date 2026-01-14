@@ -127,33 +127,47 @@
     {{-- Main content --}}
     <div class="space-y-12 lg:grid lg:grid-cols-1 lg:gap-8 lg:space-y-0">
         <div>
-            {{-- Search input --}}
-            <x-filament::input.wrapper class="mb-4">
-                <x-slot name="prefix">
-                    <x-heroicon-o-magnifying-glass class="w-5 h-5 text-gray-400 dark:text-gray-500"/>
-                </x-slot>
-                <x-filament::input
-                    name="search"
-                    x-data="{
-                        focusInput() {
-                            this.$refs.searchInput.focus();
-                        }
-                    }"
-                    x-ref="searchInput"
-                    x-init="
-                        $nextTick(() => focusInput());
-                        document.addEventListener('visibilitychange', () => {
-                            if (!document.hidden) {
-                                setTimeout(() => focusInput(), 100);
+            {{-- Search inputs --}}
+            <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
+                <x-filament::input.wrapper>
+                    <x-slot name="prefix">
+                        <x-heroicon-o-magnifying-glass class="w-5 h-5 text-gray-400 dark:text-gray-500"/>
+                    </x-slot>
+                    <x-filament::input
+                        name="barcode_search"
+                        x-data="{
+                            focusInput() {
+                                this.$refs.searchInput.focus();
                             }
-                        });
-                    "
-                    x-on:keydown.enter="$wire.addByBarcode($event.target.value); $event.target.value=''; $nextTick(() => focusInput())"
-                    wire:model.live="search"
-                    placeholder="Skanerlash yoki qo'lda kiriting..."
-                    autofocus
-                />
-            </x-filament::input.wrapper>
+                        }"
+                        x-ref="searchInput"
+                        x-init="
+                            $nextTick(() => focusInput());
+                            document.addEventListener('visibilitychange', () => {
+                                if (!document.hidden) {
+                                    setTimeout(() => focusInput(), 100);
+                                }
+                            });
+                        "
+                        x-on:keydown.enter="$wire.addByBarcode($event.target.value); $event.target.value=''; $nextTick(() => focusInput())"
+                        wire:model.live="barcodeSearch"
+                        placeholder="Tovar nomi yoki barcode orqali qidiring..."
+                        autofocus
+                    />
+                </x-filament::input.wrapper>
+
+                <x-filament::input.wrapper>
+                    <x-slot name="prefix">
+                        <x-heroicon-o-magnifying-glass class="w-5 h-5 text-gray-400 dark:text-gray-500"/>
+                    </x-slot>
+                    <x-filament::input
+                        name="code_search"
+                        x-on:keydown.enter="$wire.addByCode($event.target.value); $event.target.value='';"
+                        wire:model.live="codeSearch"
+                        placeholder="Kod yoki tovar nomi orqali qidiring..."
+                    />
+                </x-filament::input.wrapper>
+            </div>
 
             {{-- Search results --}}
             @if($products->isNotEmpty())

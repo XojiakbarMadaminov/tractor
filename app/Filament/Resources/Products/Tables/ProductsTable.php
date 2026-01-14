@@ -21,6 +21,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ForceDeleteBulkAction;
+use phpDocumentor\Reflection\Types\False_;
 
 class ProductsTable
 {
@@ -49,7 +50,7 @@ class ProductsTable
 
                     TextColumn::make('barcode')
                         ->label('Bar kod')
-                        ->searchable(),
+                        ->searchable(isIndividual: true, isGlobal: false),
 
                     TextColumn::make('yuan_price')
                         ->label('Yuan narxi (¥)')
@@ -64,12 +65,10 @@ class ProductsTable
                         ->numeric(),
                     TextColumn::make('category.name')
                         ->label('Kategoriyasi')
-                        ->sortable()
-                        ->searchable(),
+                        ->sortable(),
                     TextColumn::make('location.name')
                         ->label('Joylashuvi')
-                        ->sortable()
-                        ->searchable(),
+                        ->sortable(),
                 ],
                 $stocks->map(
                     fn ($stock) => TextColumn::make("stock_{$stock->id}")
