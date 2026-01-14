@@ -36,7 +36,7 @@ class TopSellingProductsChart extends ChartWidget
         $start = Carbon::parse($this->start_date ?? now())->startOfDay();
         $end = Carbon::parse($this->end_date ?? now())->endOfDay();
 
-        $topProducts = SaleItem::with(['product' => fn ($query) => $query->withTrashed()])
+        $topProducts = SaleItem::with(['product'])
             ->whereBetween('created_at', [$start, $end])
             ->selectRaw('product_id, SUM(qty) as total_qty')
             ->groupBy('product_id')

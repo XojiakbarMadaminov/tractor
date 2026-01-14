@@ -27,7 +27,7 @@ class LeastSellingProductsChart extends ChartWidget
         $start = Carbon::parse($this->start_date ?? now())->startOfDay();
         $end = Carbon::parse($this->end_date ?? now())->endOfDay();
 
-        $leastProducts = SaleItem::with(['product' => fn ($query) => $query->withTrashed()])
+        $leastProducts = SaleItem::with(['product'])
             ->whereBetween('created_at', [$start, $end])
             ->selectRaw('product_id, SUM(qty) as total_qty')
             ->groupBy('product_id')
