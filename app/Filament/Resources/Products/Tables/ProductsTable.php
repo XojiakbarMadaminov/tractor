@@ -147,7 +147,7 @@ class ProductsTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                     //                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
+                    //                    RestoreBulkAction::make(),
                     BulkAction::make('bulk_print_barcode')
                         ->label('Barcodeni chop etish')
                         ->icon('heroicon-o-printer')
