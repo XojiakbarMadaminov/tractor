@@ -2,17 +2,16 @@
 
 namespace App\Models;
 
-use App\Models\Traits\HasCurrentStoreScope;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Traits\HasCurrentStoreScope;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use SoftDeletes, HasCurrentStoreScope;
-    protected $table = 'products';
+    use HasCurrentStoreScope;
+    protected $table   = 'products';
     protected $guarded = [];
 
     public function productStocks(): HasMany

@@ -390,12 +390,7 @@ class Pos extends Page
             return;
         }
 
-        $product = Product::where('code', $value)
-            ->orWhere(function ($q) use ($value) {
-                $q->where('name', 'ILIKE', "{$value}%")
-                    ->orWhere('name', 'ILIKE', "%{$value}");
-            })
-            ->first();
+        $product = Product::where('code', $value)->first();
 
         if ($product) {
             app(CartService::class)->add($product, 1, $this->activeCartId);
@@ -452,16 +447,30 @@ class Pos extends Page
             return;
         }
 
+        $exactColumns        = ['code', 'barcode'];
+        $prioritizeExactCode = in_array('code', $columns, true);
+
         $this->products = Product::query()
-            ->where(function ($query) use ($value, $columns) {
+            ->where(function ($query) use ($value, $columns, $exactColumns) {
                 foreach ($columns as $index => $column) {
+                    $isExact = in_array($column, $exactColumns, true);
+
                     if ($index === 0) {
-                        $query->where($column, 'ILIKE', "%{$value}%");
+                        if ($isExact) {
+                            $query->where($column, $value);
+                        } else {
+                            $query->where($column, 'ILIKE', "%{$value}%");
+                        }
                     } else {
-                        $query->orWhere($column, 'ILIKE', "%{$value}%");
+                        if ($isExact) {
+                            $query->orWhere($column, $value);
+                        } else {
+                            $query->orWhere($column, 'ILIKE', "%{$value}%");
+                        }
                     }
                 }
             })
+            ->when($prioritizeExactCode, fn ($q) => $q->orderByRaw('CASE WHEN code = ? THEN 0 ELSE 1 END', [$value]))
             ->orderBy('name')
             ->limit(15)
             ->get();

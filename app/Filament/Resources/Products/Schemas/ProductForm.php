@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Products\Schemas;
 use App\Models\Stock;
 use Filament\Actions\Action;
 use Filament\Schemas\Schema;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Grid;
 use Filament\Forms\Components\TextInput;
@@ -20,39 +22,60 @@ class ProductForm
                 Section::make('Tovar ma`lumotlari')
                     ->columnSpanFull()
                     ->columns(2)
-                    ->schema([
-                        TextInput::make('name')
-                            ->label('Nomi')
-                            ->unique('products', 'name', ignoreRecord: true)
-                            ->required()
-                            ->columnSpanFull(),
+                    ->schema(function ($record) {
+                        $user    = auth()->user();
+                        $storeId = $user?->current_store_id;
 
-                        TextInput::make('code')
-                            ->label('Kod')
-                            ->unique('products', 'code', ignoreRecord: true)
-                            ->nullable(),
+                        return [
+                            TextInput::make('name')
+                                ->label('Nomi')
+                                ->unique('products', 'name', ignoreRecord: true)
+                                ->required()
+                                ->columnSpanFull(),
 
-                        TextInput::make('barcode')
-                            ->label('Bar kod')
-                            ->unique('products', 'barcode', ignoreRecord: true)
-                            ->numeric()
-                            ->required()
-                            ->autofocus()
-                            ->suffixAction(
-                                Action::make('generateBarcode')
-                                    ->icon('heroicon-m-sparkles')
-                                    ->tooltip('EAN-13 Bar kod yaratish')
-                                    ->action(function (Set $set) {
-                                        $set('barcode', self::generateEAN13Barcode());
-                                    })
-                            ),
-                        Select::make('category_id')
-                            ->label('Kategoriyasi')
-                            ->relationship('category', 'name', fn ($query) => $query->scopes('active')),
-                        Select::make('is_from')
-                            ->label('Qayerdan')
-                            ->relationship('location', 'name', fn ($query) => $query->scopes('active')),
-                    ]),
+                            TextInput::make('code')
+                                ->label('Kod')
+                                ->nullable()
+                                ->rule(function () use ($record, $storeId) {
+                                    if (!$storeId) {
+                                        return null;
+                                    }
+
+                                    return Rule::unique('products', 'code')
+                                        ->ignore($record?->id)
+                                        ->where(function ($query) use ($storeId) {
+                                            $query->whereExists(function ($sub) use ($storeId) {
+                                                $sub->select(DB::raw(1))
+                                                    ->from('product_stocks as ps')
+                                                    ->join('stocks as s', 'ps.stock_id', '=', 's.id')
+                                                    ->join('store_stock as ss', 's.id', '=', 'ss.stock_id')
+                                                    ->whereColumn('ps.product_id', 'products.id')
+                                                    ->where('ss.store_id', $storeId);
+                                            });
+                                        });
+                                }),
+                        ];
+                        //                        TextInput::make('barcode')
+                        //                            ->label('Bar kod')
+                        //                            ->unique('products', 'barcode', ignoreRecord: true)
+                        //                            ->numeric()
+                        //                            ->required()
+                        //                            ->autofocus()
+                        //                            ->suffixAction(
+                        //                                Action::make('generateBarcode')
+                        //                                    ->icon('heroicon-m-sparkles')
+                        //                                    ->tooltip('EAN-13 Bar kod yaratish')
+                        //                                    ->action(function (Set $set) {
+                        //                                        $set('barcode', self::generateEAN13Barcode());
+                        //                                    })
+                        //                            ),
+                        //                        Select::make('category_id')
+                        //                            ->label('Kategoriyasi')
+                        //                            ->relationship('category', 'name', fn ($query) => $query->scopes('active')),
+                        //                        Select::make('is_from')
+                        //                            ->label('Qayerdan')
+                        //                            ->relationship('location', 'name', fn ($query) => $query->scopes('active')),
+                    }),
 
                 Section::make(' Narxlar')
                     ->columnSpanFull()

@@ -21,7 +21,6 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ForceDeleteBulkAction;
-use phpDocumentor\Reflection\Types\False_;
 
 class ProductsTable
 {
@@ -48,9 +47,9 @@ class ProductsTable
                         ->label('Kod')
                         ->searchable(),
 
-                    TextColumn::make('barcode')
-                        ->label('Bar kod')
-                        ->searchable(isIndividual: true, isGlobal: false),
+                    //                    TextColumn::make('barcode')
+                    //                        ->label('Bar kod')
+                    //                        ->searchable(isIndividual: true, isGlobal: false),
 
                     TextColumn::make('yuan_price')
                         ->label('Yuan narxi (¥)')
@@ -63,12 +62,12 @@ class ProductsTable
                     TextColumn::make('price')
                         ->label('Narxi')
                         ->numeric(),
-                    TextColumn::make('category.name')
-                        ->label('Kategoriyasi')
-                        ->sortable(),
-                    TextColumn::make('location.name')
-                        ->label('Joylashuvi')
-                        ->sortable(),
+                    //                    TextColumn::make('category.name')
+                    //                        ->label('Kategoriyasi')
+                    //                        ->sortable(),
+                    //                    TextColumn::make('location.name')
+                    //                        ->label('Joylashuvi')
+                    //                        ->sortable(),
                 ],
                 $stocks->map(
                     fn ($stock) => TextColumn::make("stock_{$stock->id}")
@@ -83,42 +82,42 @@ class ProductsTable
                 )->all()
             ))
             ->filters([
-                TrashedFilter::make(),
-                SelectFilter::make('category_id')
-                    ->label('Kategoriyasi')
-                    ->relationship('category', 'name', fn ($query) => $query->scopes('active')),
-                SelectFilter::make('is_from')
-                    ->label('Joylashuvi')
-                    ->relationship('location', 'name', fn ($query) => $query->scopes('active')),
-                Filter::make('stock_quantity')
-                    ->label('Ombordagi miqdor')
-                    ->schema([
-                        Select::make('stock_id')
-                            ->label('Ombor')
-                            ->options(
-                                Stock::query()
-                                    ->scopes('active')
-                                    ->pluck('name', 'id')
-                                    ->toArray()
-                            )
-                            ->required(),
-
-                        TextInput::make('quantity')
-                            ->label('Miqdor')
-                            ->numeric()
-                            ->default(0)
-                            ->required(),
-                    ])
-                    ->query(function (Builder $query, array $data) {
-                        if (empty($data['stock_id']) || empty($data['quantity'])) {
-                            return $query;
-                        }
-
-                        return $query->whereHas('productStocks', function ($q) use ($data) {
-                            $q->where('stock_id', $data['stock_id'])
-                                ->where('quantity', '<=', (int) $data['quantity']);
-                        });
-                    }),
+                //                TrashedFilter::make(),
+                //                SelectFilter::make('category_id')
+                //                    ->label('Kategoriyasi')
+                //                    ->relationship('category', 'name', fn ($query) => $query->scopes('active')),
+                //                SelectFilter::make('is_from')
+                //                    ->label('Joylashuvi')
+                //                    ->relationship('location', 'name', fn ($query) => $query->scopes('active')),
+                //                Filter::make('stock_quantity')
+                //                    ->label('Ombordagi miqdor')
+                //                    ->schema([
+                //                        Select::make('stock_id')
+                //                            ->label('Ombor')
+                //                            ->options(
+                //                                Stock::query()
+                //                                    ->scopes('active')
+                //                                    ->pluck('name', 'id')
+                //                                    ->toArray()
+                //                            )
+                //                            ->required(),
+                //
+                //                        TextInput::make('quantity')
+                //                            ->label('Miqdor')
+                //                            ->numeric()
+                //                            ->default(0)
+                //                            ->required(),
+                //                    ])
+                //                    ->query(function (Builder $query, array $data) {
+                //                        if (empty($data['stock_id']) || empty($data['quantity'])) {
+                //                            return $query;
+                //                        }
+                //
+                //                        return $query->whereHas('productStocks', function ($q) use ($data) {
+                //                            $q->where('stock_id', $data['stock_id'])
+                //                                ->where('quantity', '<=', (int) $data['quantity']);
+                //                        });
+                //                    }),
             ])
             ->recordActions([
                 Action::make('print_barcode')
@@ -147,7 +146,7 @@ class ProductsTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
+                    //                    ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                     BulkAction::make('bulk_print_barcode')
                         ->label('Barcodeni chop etish')
