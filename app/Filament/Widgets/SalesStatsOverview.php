@@ -40,8 +40,8 @@ class SalesStatsOverview extends BaseWidget
 
 
         return [
-            Stat::make('Umumiy Sotuvlar', number_format($totalSales, 2) . " so'm"),
-            Stat::make('Foyda', number_format($totalProfit, 2) . " so'm"),
+            Stat::make('Umumiy Sotuvlar', number_format($totalSales, 0) . " so'm"),
+            Stat::make('Foyda', number_format($totalProfit, 0) . " so'm"),
         ];
     }
 }

@@ -20,7 +20,7 @@ class DebtorStatsOverview extends BaseWidget
 
         return [
             Stat::make("Qarzdorlik (UZS)", number_format($debts['uzs'] ?? 0, 0, '.', ' ') . " so'm"),
-            Stat::make("Qarzdorlik (USD)", number_format($debts['usd'] ?? 0, 2) . " $"),
+            Stat::make("Qarzdorlik (USD)", number_format($debts['usd'] ?? 0) . " $"),
         ];
     }
 

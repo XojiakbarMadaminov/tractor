@@ -8,6 +8,7 @@ use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Pages\Page;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -22,20 +23,19 @@ class SalesHistoryPage extends Page implements HasTable
     use HasPageShield;
 
     protected static ?string $navigationLabel = 'Sotuv tarixi';
-    protected static string|\UnitEnum|null $navigationGroup = 'Finance';
     protected static ?string $title = 'Sotuv tarixi';
     protected static ?string $slug = 'sales-history';
     protected string $view = 'filament.pages.sales-history-page';
-    protected static string|null|\BackedEnum $navigationIcon = 'heroicon-o-receipt-percent';
+    protected static string|null|\BackedEnum $navigationIcon = Heroicon::ClipboardDocumentList;
     protected static ?int $navigationSort = 3;
 
-    public string $datePreset = 'week';
+    public string $datePreset = 'today';
     public ?string $customStart = null;
     public ?string $customEnd = null;
 
     public function mount(): void
     {
-        $this->setPreset('week');
+        $this->setPreset('today', shouldRefresh: false);
     }
 
     public function table(Table $table): Table
@@ -119,17 +119,21 @@ class SalesHistoryPage extends Page implements HasTable
     protected function getPresetActions(): array
     {
         return [
+            Action::make('today')
+                ->label('Bugun')
+                ->color(fn (): string => $this->datePreset === 'today' ? 'primary' : 'gray')
+                ->action(fn () => $this->setPreset('today')),
             Action::make('thisWeek')
                 ->label('Bu hafta')
-                ->color($this->datePreset === 'week' ? 'primary' : 'gray')
+                ->color(fn (): string => $this->datePreset === 'week' ? 'primary' : 'gray')
                 ->action(fn () => $this->setPreset('week')),
             Action::make('thisMonth')
                 ->label('Bu oy')
-                ->color($this->datePreset === 'month' ? 'primary' : 'gray')
+                ->color(fn (): string => $this->datePreset === 'month' ? 'primary' : 'gray')
                 ->action(fn () => $this->setPreset('month')),
             Action::make('customRange')
                 ->label('Oraliq sana')
-                ->color($this->datePreset === 'custom' ? 'primary' : 'gray')
+                ->color(fn (): string => $this->datePreset === 'custom' ? 'primary' : 'gray')
                 ->form([
                     DatePicker::make('start')
                         ->label('Boshlanish sana')
@@ -151,11 +155,12 @@ class SalesHistoryPage extends Page implements HasTable
         ];
     }
 
-    protected function setPreset(string $preset, ?string $start = null, ?string $end = null): void
+    protected function setPreset(string $preset, ?string $start = null, ?string $end = null, bool $shouldRefresh = true): void
     {
         $this->datePreset = $preset;
 
         [$startDate, $endDate] = match ($preset) {
+            'today'  => [now()->startOfDay(), now()->endOfDay()],
             'week'   => [now()->startOfWeek(), now()->endOfWeek()],
             'month'  => [now()->startOfMonth(), now()->endOfMonth()],
             'custom' => [Carbon::parse($start)->startOfDay(), Carbon::parse($end)->endOfDay()],
@@ -164,6 +169,10 @@ class SalesHistoryPage extends Page implements HasTable
 
         $this->customStart = $startDate->toDateString();
         $this->customEnd   = $endDate->toDateString();
+
+        if ($shouldRefresh) {
+            $this->refreshSalesTable();
+        }
     }
 
     protected function applyDateFilter(Builder $query): Builder
@@ -176,5 +185,11 @@ class SalesHistoryPage extends Page implements HasTable
         $end   = Carbon::parse($this->customEnd)->endOfDay();
 
         return $query->whereBetween('created_at', [$start, $end]);
+    }
+
+    protected function refreshSalesTable(): void
+    {
+        $this->resetPage();
+        $this->flushCachedTableRecords();
     }
 }
