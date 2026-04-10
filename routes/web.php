@@ -2,10 +2,12 @@
 
 use App\Models\Debtor;
 use App\Models\Product;
+use App\Models\Sale;
 use App\Models\Store;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Support\ReceiptData;
 
 Route::get('/', function () {
     return redirect()->to('/admin/login');
@@ -79,3 +81,11 @@ Route::get('/products/barcodes/bulk', function (Request $request) {
         ->stream("barcodes.pdf");
 })->name('product.barcodes.bulk');
 
+Route::get('/sales/{sale}/receipt', function (Sale $sale) {
+    $receipt = ReceiptData::fromSale($sale);
+
+    return view('sales-receipt-print', [
+        'sale'     => $sale,
+        'receipt'  => $receipt,
+    ]);
+})->middleware('auth')->name('sale.receipt.print');

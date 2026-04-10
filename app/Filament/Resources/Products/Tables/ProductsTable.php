@@ -120,25 +120,25 @@ class ProductsTable
                 //                    }),
             ])
             ->recordActions([
-                Action::make('print_barcode')
-                    ->label('Print Barcode')
-                    ->icon('heroicon-o-printer')
-                    ->schema([
-                        Select::make('size')
-                            ->label('Label Razmeri')
-                            ->options([
-                                '30x20' => '3.0 cm x 2.0 cm',
-                                '57x30' => '5.7 cm x 3.0 cm',
-                                //                                '85x65' => '8.5 cm x 6.5 cm',
-                            ])
-                            ->required(),
-                    ])
-                    ->action(function (array $data, Product $record) {
-                        return redirect()->away(route('product.barcode.pdf', [
-                            'product' => $record->id,
-                            'size'    => $data['size'],
-                        ]));
-                    }),
+//                Action::make('print_barcode')
+//                    ->label('Print Barcode')
+//                    ->icon('heroicon-o-printer')
+//                    ->schema([
+//                        Select::make('size')
+//                            ->label('Label Razmeri')
+//                            ->options([
+//                                '30x20' => '3.0 cm x 2.0 cm',
+//                                '57x30' => '5.7 cm x 3.0 cm',
+//                                //                                '85x65' => '8.5 cm x 6.5 cm',
+//                            ])
+//                            ->required(),
+//                    ])
+//                    ->action(function (array $data, Product $record) {
+//                        return redirect()->away(route('product.barcode.pdf', [
+//                            'product' => $record->id,
+//                            'size'    => $data['size'],
+//                        ]));
+//                    }),
 
                 ViewAction::make(),
                 EditAction::make(),

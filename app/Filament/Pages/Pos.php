@@ -8,6 +8,7 @@ use Filament\Pages\Page;
 use Livewire\Attributes\On;
 use App\Models\ProductStock;
 use App\Services\CartService;
+use App\Support\ReceiptData;
 use Filament\Notifications\Notification;
 use Filament\Panel\Concerns\HasNotifications;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
@@ -32,6 +33,7 @@ class Pos extends Page
     public int $activeCartId     = 1; // Joriy faol cart ID
     public bool $showReceipt     = false; // Chek ko'rsatish uchun
     public array $receiptData    = []; // Chek ma'lumotlari
+    public string $paymentType   = 'cash';
 
     /** @var EloquentCollection<int, Product> */
     public EloquentCollection $products;
@@ -240,13 +242,19 @@ class Pos extends Page
 
         \DB::transaction(function () use ($cartService, $totals) {
             $sale = Sale::create([
-                'store_id' => auth()->user()->current_store_id,
-                'total'    => $totals['amount'],
+                'store_id'      => auth()->user()->current_store_id,
+                'cashier_id'    => auth()->id(),
+                'payment_type'  => $this->paymentType,
+                'status'        => 'completed',
+                'total'         => $totals['amount'],
+                'paid_amount'   => $totals['amount'],
+                'customer_name' => null,
             ]);
 
             foreach ($cartService->all($this->activeCartId) as $row) {
                 $sale->items()->create([
                     'product_id' => $row['id'],
+                    'stock_id'   => $row['stock_id'] ?? null,
                     'qty'        => $row['qty'],
                     'price'      => $row['price'],
                     'subtotal'   => $row['qty'] * $row['price'],
@@ -272,13 +280,9 @@ class Pos extends Page
     /* ---------- Chek funksiyalari ---------- */
     public function prepareReceipt(int $cartId, array $items, array $totals): void
     {
-        $this->receiptData = [
-            'cart_id'        => $cartId,
-            'items'          => $items,
-            'totals'         => $totals,
-            'date'           => now()->format('d.m.Y H:i:s'),
-            'receipt_number' => 'R' . str_pad($cartId, 4, '0', STR_PAD_LEFT) . time(),
-        ];
+        $this->receiptData = ReceiptData::fromCart($cartId, $items, $totals, [
+            'payment_type' => $this->paymentType,
+        ]);
 
         $this->showReceipt = true;
     }

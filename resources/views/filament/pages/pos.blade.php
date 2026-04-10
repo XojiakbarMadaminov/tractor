@@ -1,82 +1,11 @@
 <x-filament::page class="bg-gray-100 dark:bg-gray-950">
     {{-- Auto-focus script --}}
     <script src="{{asset('js/pos.js')}}"></script>
+    <script src="{{asset('js/receipt.js')}}"></script>
 
 
     {{-- Receipt Modal --}}
-    @if($showReceipt)
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div
-                class="bg-white text-black dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
-                style="max-height:90vh;"
-                wire:click.stop
-            >
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Savat Cheki</h3>
-                    <button wire:click="closeReceipt"
-                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                        <x-heroicon-o-x-mark class="w-6 h-6"/>
-                    </button>
-                </div>
-
-                <div id="receipt-content" class="receipt-content">
-                    <div class="center" style="margin-bottom:10px; margin-top:5px;">
-                        <h3>Traktor ehtiyot qismlari</h3>
-                    </div>
-                    <div class="center bold" style="font-size:18px; margin-bottom:6px;">SAVDO CHEKI</div>
-                    <div style="text-align:center; margin-bottom:4px;">{{ $receiptData['receipt_number'] ?? '' }}</div>
-                    <div style="text-align:center; margin-bottom:8px;">{{ $receiptData['date'] ?? '' }}</div>
-
-                    <div>Savat: #{{ $receiptData['cart_id'] ?? '' }}</div>
-                    <div class="line"></div>
-
-                    @if(isset($receiptData['items']))
-                        @foreach($receiptData['items'] as $item)
-                            <div class="item-row">
-                <span class="item-name">
-                    {{ $item['name'] }}<br>
-                    <span
-                        style="font-size:11px;">{{ $item['qty'] }} x {{ number_format($item['price'], 0, '.', ' ') }}</span>
-                </span>
-                                <span class="item-total bold">{{ number_format($item['qty'] * $item['price'], 0, '.', ' ') }} so'm</span>
-                            </div>
-                        @endforeach
-                    @endif
-
-                    <div class="line"></div>
-                    <div class="item-row">
-                        <span>Jami mahsulotlar:</span>
-                        <span>{{ $receiptData['totals']['qty'] ?? 0 }} dona</span>
-                    </div>
-                    <div class="item-row bold" style="font-size:15px;">
-                        <span>JAMI SUMMA:</span>
-                        <span>{{ number_format($receiptData['totals']['amount'] ?? 0, 0, '.', ' ') }} so'm</span>
-                    </div>
-                    <div class="center" style="margin-top:18px; font-size:12px;">
-                        Xaridingiz uchun rahmat!<br>
-                        Yana tashrifingizni kutamiz
-                    </div>
-                    <div class="receipt-footer-printonly">
-                        <img src="{{ asset('images/traktor-qr.png') }}" alt="QR code" style="max-width:32mm; max-height:32mm;">
-                    </div>
-                </div>
-
-
-                <div class="flex gap-3 mt-6">
-                    <button wire:click="printReceipt"
-                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-blue py-2 px-4 rounded-lg font-medium">
-                        <x-heroicon-o-printer class="w-5 h-5 inline mr-2"/>
-                        Chop etish
-                    </button>
-                    <button wire:click="closeReceipt"
-                            class="flex-1 bg-gray-600 hover:bg-gray-700 text-blue py-2 px-4 rounded-lg font-medium">
-                        Yopish
-                    </button>
-                </div>
-
-            </div>
-        </div>
-    @endif
+    @include('receipts.partials.modal')
 
     {{-- Cart Management Section --}}
     <x-filament::card class="mb-6" wire:key="cart-header-{{ $activeCartId }}-{{ $totals['qty'] }}">
@@ -396,6 +325,21 @@
                     <div class="flex justify-between text-lg font-semibold text-gray-900 dark:text-white">
                         <span>Jami summa:</span>
                         <span>{{ number_format($totals['amount'], 0, '.', ' ') }} so'm</span>
+                    </div>
+
+                    <div class="pt-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            To'lov turi
+                        </label>
+                        <select
+                            wire:model.live="paymentType"
+                            class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100
+                                focus:border-primary-500 focus:ring-primary-500 text-sm"
+                        >
+                            <option value="cash">Naqd</option>
+                            <option value="card">Karta</option>
+                            <option value="transfer">O'tkazma</option>
+                        </select>
                     </div>
 
                     {{-- Tugmalar satri --}}
