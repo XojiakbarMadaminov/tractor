@@ -81,6 +81,10 @@ class DebtorForm
                         ->label('Qarz sanasi')
                         ->default(today())
                         ->required(),
+
+                    DatePicker::make('return_date')
+                        ->label('Qaytarish sanasi')
+                        ->nullable(),
                 ])->columnSpanFull(),
 
                 Textarea::make('note')

@@ -35,7 +35,10 @@ class DebtorsTable
                     ->label('Valyuta'),
                 TextColumn::make('date')
                     ->sortable()
-                    ->label('Sana')
+                    ->label('Sana'),
+                TextColumn::make('return_date')
+                    ->sortable()
+                    ->label('Qaytarish sanasi')
             ])
             ->recordUrl(fn ($record) => DebtorResource::getUrl('view', ['record' => $record]))
             ->filters([
