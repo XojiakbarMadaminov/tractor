@@ -33,6 +33,12 @@ class ListDebtors extends ListRecords
         return [
             'Qarzdorlar' => Tab::make(__('Qarzdorlar'))->badge(Debtor::scopes('stillInDebt')->count())
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->scopes('stillInDebt')),
+            'Bugun qaytarish kerak' => Tab::make(__('Bugun qaytarish kerak'))
+                ->badge(Debtor::whereDate('return_date', today())->where('amount', '>', 0)->count())
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereDate('return_date', today())->where('amount', '>', 0)),
+            'Muddati o\'tgan' => Tab::make(__('Muddati o\'tgan'))
+                ->badge(Debtor::whereDate('return_date', '<', today())->where('amount', '>', 0)->count())
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereDate('return_date', '<', today())->where('amount', '>', 0)),
             'Qarzdorlik yopilganlar' => Tab::make(__('Qarzdorlik yopilganlar'))->badge(Debtor::scopes('zeroDebt')->count())
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->scopes('zeroDebt')),
         ];
